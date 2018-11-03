@@ -1,0 +1,20 @@
+# Copyright 2018 Shangming Du, MSc Elec + Computer Eng, University of Birmingham.
+# All Rights Reserved.
+#
+# PYCLK, SpecialClock with GUI
+# https://github.com/virtualwiz/pyclk
+# ===============================================================================
+
+import tkinter as tk #GUI library
+import datetime as rtc #Date and time library
+
+class App(tk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.pack()
+
+pyclk = App()
+pyclk.master.title("PYCLK")
+pyclk.master.maxsize(480, 320)
+
+pyclk.mainloop()

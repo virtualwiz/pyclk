@@ -1,5 +1,11 @@
 # Copyright (C) 2018 Shangming Du, University of Birmingham. All Rights Reserved.
-#
+#  ____         ____ _     _  __
+# |  _ \ _   _ / ___| |   | |/ /
+# | |_) | | | | |   | |   | ' / 
+# |  __/| |_| | |___| |___| . \ 
+# |_|    \__, |\____|_____|_|\_\
+#        |___/
+# 
 # PYCLK, SpecialClock with GUI.
 # https://github.com/virtualwiz/pyclk
 # ================================================================================
@@ -61,19 +67,22 @@ class PYCLK(tk.Tk):
         # Widgets on TIME page
         self.StringVar_TIME_Clock = tk.StringVar()
         self.StringVar_TIME_Date = tk.StringVar()
-        self.TimezoneOptionList = ["London","Beijing"]
-        Widget_TIME_Clock = tk.Label(Page_TIME, textvariable=self.StringVar_TIME_Clock)
-        Widget_TIME_Date = tk.Label(Page_TIME, textvariable=self.StringVar_TIME_Date)
+        Widget_TIME_Clock = tk.Label(Page_TIME, textvariable=self.StringVar_TIME_Clock, font=("Courier", 80))
+        Widget_TIME_Date = tk.Label(Page_TIME, textvariable=self.StringVar_TIME_Date, font=("Courier", 30))
         Widget_TIME_TimezoneLabel = tk.Label(Page_TIME, text="Timezone")
         Widget_TIME_Timezone = tk.Label(Page_TIME, text="Placeholder")
         Widget_TIME_TimeFormat = tk.Checkbutton(Page_TIME, text="24h Format")
         Widget_TIME_QuitButton = tk.Button(Page_TIME, text="Quit", command=sys.exit)
-        Widget_TIME_Clock.pack()
-        Widget_TIME_Date.pack()
-        Widget_TIME_TimezoneLabel.pack()
-        Widget_TIME_Timezone.pack()
-        Widget_TIME_TimeFormat.pack()
-        Widget_TIME_QuitButton.pack()
+        Widget_TIME_Clock.grid(row=1, column=1, columnspan=4, sticky="nsew", padx=10, pady=3)
+        Widget_TIME_Date.grid(row=2, column=1, columnspan=4,sticky="nsew", padx=10, pady=3)
+        Widget_TIME_TimezoneLabel.grid(row=3, column=1, sticky="W")
+        Widget_TIME_Timezone.grid(row=3, column=2, sticky="W")
+        Widget_TIME_TimeFormat.grid(row=3, column=3, sticky="W")
+        Widget_TIME_QuitButton.grid(row=3, column=4, sticky="E")
+
+        # Widgets on STPW page
+        # Widget_STPW_Display = tk.Label(Page_STPW, text="alskjdfkljashfdkjhaskldfhlaskjdfhlkajshfdkjaslkdjfhlaskdhflksjahfdkjlashdfkjhaslkdfhlaskjdhflkasjhfkjashfdkjhalsdjfh")
+        # Widget_STPW_Display.pack()
         
 
         # Start Threads
@@ -90,5 +99,7 @@ class PYCLK(tk.Tk):
         self.TIME_Thread.start()
 
 PYCLK_Window = PYCLK()
+
+# Main application goes event-driven
 PYCLK_Window.mainloop()
 

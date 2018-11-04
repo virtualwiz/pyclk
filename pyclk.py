@@ -25,6 +25,9 @@ except:
     
 # Flags(Signals) to operate all threads
 Application_Terminate_Signal = False
+Application_Window_Width = 400
+Application_Window_Height = 220
+Application_Debug = True
 
 class TIME():
     def __init__(self):
@@ -35,7 +38,7 @@ class TIME():
         while True:
             self.DateTime_Now = rtc.datetime.now()
             self.TimeString = self.DateTime_Now.strftime("%H:%M:%S")
-            self.DateString = self.DateTime_Now.strftime("%a, %d %B %Y")
+            self.DateString = self.DateTime_Now.strftime("%a,%d %B %Y")
             time.sleep(1)
 
     def Tick_Thread_Start(self):
@@ -52,7 +55,8 @@ class PYCLK(tk.Tk):
         # Interact with System Window Manager to set window size and title
         # Disable main window resizing
         self.title("PYCLK")
-        self.resizable(False, False)
+        self.geometry(str(Application_Window_Width)+"x"+str(Application_Window_Height))
+        self.resizable(Application_Debug, Application_Debug)
 
         # Create tabbed Notebook widget and add Frames as Notebook pages
         Main_Notebook = ttk.Notebook(self)
@@ -75,15 +79,22 @@ class PYCLK(tk.Tk):
         Widget_TIME_Timezone = tk.Label(Page_TIME, text="Placeholder")
         Widget_TIME_TimeFormat = tk.Checkbutton(Page_TIME, text="24h Format")
         Widget_TIME_QuitButton = tk.Button(Page_TIME, text="Quit", command=sys.exit)
-        Widget_TIME_Clock.grid(row=1, column=1, columnspan=4, sticky="nsew", padx=10)
-        Widget_TIME_Date.grid(row=2, column=1, columnspan=4,sticky="nsew", padx=10)
-        Widget_TIME_TimezoneLabel.grid(row=3, column=1, sticky="W")
-        Widget_TIME_Timezone.grid(row=3, column=2, sticky="W")
-        Widget_TIME_TimeFormat.grid(row=3, column=3, sticky="W")
-        Widget_TIME_QuitButton.grid(row=3, column=4, sticky="E")
+        Widget_TIME_Clock.place(relx=0, rely=0, relheight=0.5, relwidth=1)
+        Widget_TIME_Date.place(relx=0, rely=0.5, relheight=0.25, relwidth=1)
+        Widget_TIME_TimezoneLabel.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.2)
+        Widget_TIME_Timezone.place(relx=0.2, rely=0.75, relheight=0.25, relwidth=0.4)
+        Widget_TIME_TimeFormat.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
+        Widget_TIME_QuitButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
+        # Widget_TIME_Clock.grid(row=1, column=1, columnspan=4, sticky="nsew")
+        # Widget_TIME_Date.grid(row=2, column=1, columnspan=4,sticky="nsew")
+        # Widget_TIME_TimezoneLabel.grid(row=3, column=1, sticky="nsew")
+        # Widget_TIME_Timezone.grid(row=3, column=2, sticky="nsew")
+        # Widget_TIME_TimeFormat.grid(row=3, column=3, sticky="nsew")
+        # Widget_TIME_QuitButton.grid(row=3, column=4, sticky="nsew")
 
         # Widgets on page Stopwatch
         self.StringVar_STPW_CurrentReading = tk.StringVar()
+        self.StringVar_STPW_CurrentReading.set("00:00.00")
         Widget_STPW_Display = tk.Label(Page_STPW, textvariable=self.StringVar_STPW_CurrentReading, font=("", 30))
         Widget_STPW_StartButton = tk.Button(Page_STPW, text="Start")
         Widget_STPW_StopResetButton = tk.Button(Page_STPW, text="Stop\nReset")

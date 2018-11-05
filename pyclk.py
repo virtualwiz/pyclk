@@ -45,10 +45,44 @@ class TIME():
         self.Tick_Thread = threading.Thread(target=self.Tick_Loop)
         self.Tick_Thread.start()
 
-
 TIME_Instance = TIME()
 
+class STPW():
+    def __init__(self):
+        # Start countdown thread on CTDN instance creation
+        self.Stopwatch_Thread_Start()
 
+    # Save Unix Since Epoch Time(.1s) to a variable
+    def Mark(self, Var):
+        Var = (int)(time.time() * 10)
+
+    def Command(self, Cmd):
+        if Cmd == "start":
+            self.Mark(self.Mark_BeginOfPeriod)
+        elif Cmd == "stop":
+            self.Mark(self.Mark_EndOfPeriod)
+        
+    def Stopwatch_Loop(self):
+        pass
+
+    def Stopwatch_Thread_Start(self):
+        pass
+    
+STPW_Instance = STPW()
+
+class CTDN():
+    def __init__(self):
+        # Start countdown thread on CTDN instance creation
+        self.Count_Thread_Start()
+
+    def Count_Loop(self):
+        pass
+
+    def Count_Thread_Start(self):
+        pass
+
+CTDN_Instance = CTDN()
+    
 class PYCLK(tk.Tk):
     def __init__(self):
         super().__init__()

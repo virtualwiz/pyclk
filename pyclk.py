@@ -21,7 +21,6 @@ try:
 except:
     print("Sorry, some dependencies are not met.")
     print("Can you call this application with Python>=3.1?")
-    exit()
     
 # Flags(Signals) to operate all threads
 Application_Terminate_Signal = False
@@ -50,23 +49,39 @@ TIME_Instance = TIME()
 class STPW():
     def __init__(self):
         # Start countdown thread on CTDN instance creation
+        self.Reading = "READY"
+        self.Mark_BeginOfPeriod = self.Get_Time()
+        self.Mark_EndOfPeriod = self.Get_Time()
+        self.Is_Running = False
         self.Stopwatch_Thread_Start()
-
+        
+    def Get_Time(self):
+        return int(time.time() * 10)
+    
     # Save Unix Since Epoch Time(.1s) to a variable
     def Mark(self, Var):
-        Var = (int)(time.time() * 10)
+        Var = self.Get_Time()
 
     def Command(self, Cmd):
         if Cmd == "start":
+            Stopwatch_Thread_Start()
             self.Mark(self.Mark_BeginOfPeriod)
         elif Cmd == "stop":
             self.Mark(self.Mark_EndOfPeriod)
+        elif Cmd == "log":
+            pass
+        elif Cmd == "reset":
+            pass
         
     def Stopwatch_Loop(self):
+        while True:
+            self.Reading = self.Get_Time() - self.Mark_BeginOfPeriod
+            time.sleep(0.1)
         pass
 
     def Stopwatch_Thread_Start(self):
-        pass
+        self.Stopwatch_Thread = threading.Thread(target=self.Stopwatch_Loop)
+        self.Stopwatch_Thread.start()
     
 STPW_Instance = STPW()
 
@@ -158,17 +173,27 @@ class PYCLK(tk.Tk):
         
 
         # Start Threads
-        self.TIME_Thread_Start()
+        self.TIME_Refresh_Loop_Start()
+        self.STPW_Refresh_Loop_Start()
 
-    def TIME_Loop(self):
+    def TIME_Refresh_Loop(self):
         while True:
             self.StringVar_TIME_Clock.set(TIME_Instance.TimeString)
             self.StringVar_TIME_Date.set(TIME_Instance.DateString)
             time.sleep(1)
 
-    def TIME_Thread_Start(self):
-        self.TIME_Thread = threading.Thread(target=self.TIME_Loop)
+    def TIME_Refresh_Loop_Start(self):
+        self.TIME_Thread = threading.Thread(target=self.TIME_Refresh_Loop)
         self.TIME_Thread.start()
+
+    def STPW_Refresh_Loop(self):
+        while True:
+            self.StringVar_STPW_CurrentReading.set(STPW_Instance.Reading)
+            time.sleep(0.1)
+
+    def STPW_Refresh_Loop_Start(self):
+        self.STPW_Thread = threading.Thread(target=self.STPW_Refresh_Loop)
+        self.STPW_Thread.start()
 
 PYCLK_Window = PYCLK()
 

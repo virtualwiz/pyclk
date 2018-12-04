@@ -52,6 +52,7 @@ class STPW():
         self.Reading = "READY"
         self.Mark_BeginOfPeriod = self.Get_Time()
         self.Mark_EndOfPeriod = self.Get_Time()
+        self.Pause_Buffer = 0
         self.Is_Running = False
         self.Stopwatch_Thread_Start()
 
@@ -61,19 +62,34 @@ class STPW():
 
     def Mark(self, Var):
         # Write time reading into a variable
-        Var = self.Get_Time()
+        if Var == "begin":
+            self.Mark_BeginOfPeriod = self.Get_Time()
+        elif Var == "end":
+            self.Mark_EndOfPeriod = self.Get_Time()
 
     def Command(self, Cmd):
         # Stopwatch commands
         if Cmd == "start":
-            Stopwatch_Thread_Start()
-            self.Mark(self.Mark_BeginOfPeriod)
-        elif Cmd == "stop":
-            self.Mark(self.Mark_EndOfPeriod)
+            if self.Is_Running == False: # Stopwatch is not running (pause or idle)
+                self.Is_Running = True
+                if self.Mark_BeginOfPeriod != self.Mark_EndOfPeriod: # Paused state
+                    self.Pause_Buffer = self.Mark_EndOfPeriod - self.Mark_BeginOfPeriod
+                    self.Mark("begin")
+                    self.Mark_BeginOfPeriod -= self.Pause_Buffer;
+                else: # Idle state
+                    self.Mark("begin")
+        elif Cmd == "pausereset":
+            if self.Is_Running == False:
+                # Reset the stopwatch
+                PYCLK_Window.Widget_STPW_LogDisplay.delete(0, tk.END)
+                self.Mark("begin")
+                self.Mark("end")
+            else:
+                # Stop the stopwatch
+                self.Mark("end")
+                self.Is_Running = False
         elif Cmd == "log":
-            pass
-        elif Cmd == "reset":
-            pass
+            PYCLK_Window.Widget_STPW_LogDisplay.insert(tk.END, self.Reading)
 
     def Convert_Time(self, One_Tenth_Seconds):
         # Convert to time format from an integer (seconds/10)
@@ -87,7 +103,10 @@ class STPW():
 
     def Stopwatch_Loop(self):
         while True:
-            self.Reading = self.Convert_Time(self.Get_Time() - self.Mark_BeginOfPeriod)
+            if self.Is_Running:
+                self.Reading = self.Convert_Time(self.Get_Time() - self.Mark_BeginOfPeriod)
+            else:
+                self.Reading = self.Convert_Time(self.Mark_EndOfPeriod - self.Mark_BeginOfPeriod)
             time.sleep(0.1)
         pass
 
@@ -152,15 +171,15 @@ class PYCLK(tk.Tk):
         self.StringVar_STPW_CurrentReading = tk.StringVar()
         self.StringVar_STPW_CurrentReading.set("00:00.0")
         Widget_STPW_Display = tk.Label(Page_STPW, textvariable=self.StringVar_STPW_CurrentReading, font=("", 50))
-        Widget_STPW_StartButton = tk.Button(Page_STPW, text="Start", activebackground="#8EFF94")
-        Widget_STPW_StopResetButton = tk.Button(Page_STPW, text="Stop\nReset", activebackground="#FFADAD")
-        Widget_STPW_LogButton = tk.Button(Page_STPW, text="Log",activebackground="#F9FF8E")
-        Widget_STPW_LogDisplay = tk.Listbox(Page_STPW)
+        Widget_STPW_StartButton = tk.Button(Page_STPW, text="Start\nResume", activebackground="#8EFF94", command=lambda:STPW_Instance.Command("start"))
+        Widget_STPW_PauseResetButton = tk.Button(Page_STPW, text="Pause\nReset", activebackground="#FFADAD", command=lambda:STPW_Instance.Command("pausereset"))
+        Widget_STPW_LogButton = tk.Button(Page_STPW, text="Log",activebackground="#F9FF8E", command=lambda:STPW_Instance.Command("log"))
+        self.Widget_STPW_LogDisplay = tk.Listbox(Page_STPW)
         Widget_STPW_Display.place(relx=0, rely=0, relheight=0.6, relwidth=0.75)
         Widget_STPW_StartButton.place(relx=0, rely=0.6, relheight=0.4, relwidth=0.25)
-        Widget_STPW_StopResetButton.place(relx=0.25, rely=0.6, relheight=0.4, relwidth=0.25)
+        Widget_STPW_PauseResetButton.place(relx=0.25, rely=0.6, relheight=0.4, relwidth=0.25)
         Widget_STPW_LogButton.place(relx=0.5, rely=0.6, relheight=0.4, relwidth=0.25)
-        Widget_STPW_LogDisplay.place(relx=0.75, rely=0, relheight=1, relwidth=0.25)
+        self.Widget_STPW_LogDisplay.place(relx=0.75, rely=0, relheight=1, relwidth=0.25)
 
         #Widgets on page Countdown
         self.StringVar_CTDN_CurrentReading = tk.StringVar()
@@ -184,7 +203,6 @@ class PYCLK(tk.Tk):
         Widget_CTDN_StartButton.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
         Widget_CTDN_CancelButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
 
-
         # Start Threads
         self.TIME_Refresh_Loop_Start()
         self.STPW_Refresh_Loop_Start()
@@ -207,6 +225,9 @@ class PYCLK(tk.Tk):
     def STPW_Refresh_Loop_Start(self):
         self.STPW_Thread = threading.Thread(target=self.STPW_Refresh_Loop)
         self.STPW_Thread.start()
+
+    # def STPW_Refresh_LogDisplay(self):
+    #     self.Widget_STPW_LogDisplay.insert(tk.END, "something") 
 
 PYCLK_Window = PYCLK()
 

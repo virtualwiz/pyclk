@@ -5,24 +5,24 @@
 # |  __/| |_| | |___| |___| . \ 
 # |_|    \__, |\____|_____|_|\_\
 #        |___/
-#
+# 
 # PYCLK, SpecialClock with GUI.
 # https://github.com/virtualwiz/pyclk
 # ================================================================================
 
 # Import dependencies. Prompt user if Python version isn't correct
 try:
-    import sys
     import tkinter as tk # Main GUI library
     from tkinter import ttk # Submodule of tkinter
     import time
     import datetime as rtc # Date and time library
     import threading
+    import sys
 except:
     print("Sorry, some dependencies are not met.")
     print("Can you call this application with Python>=3.1?")
-    sys.exit()
-
+    
+# Flags(Signals) to operate all threads
 Application_Terminate_Signal = False
 Application_Window_Width = 400
 Application_Window_Height = 220
@@ -54,17 +54,15 @@ class STPW():
         self.Mark_EndOfPeriod = self.Get_Time()
         self.Is_Running = False
         self.Stopwatch_Thread_Start()
-
+        
     def Get_Time(self):
-        # Get Unix Since Epoch Time(.1s)
         return int(time.time() * 10)
-
+    
+    # Save Unix Since Epoch Time(.1s) to a variable
     def Mark(self, Var):
-        # Write time reading into a variable
         Var = self.Get_Time()
 
     def Command(self, Cmd):
-        # Stopwatch commands
         if Cmd == "start":
             Stopwatch_Thread_Start()
             self.Mark(self.Mark_BeginOfPeriod)
@@ -74,27 +72,17 @@ class STPW():
             pass
         elif Cmd == "reset":
             pass
-
-    def Convert_Time(self, One_Tenth_Seconds):
-        # Convert to time format from an integer (seconds/10)
-        intervals = [26000, 600, 10, 1]
-        result=[]
-        for unit in intervals:
-            val = One_Tenth_Seconds // unit
-            One_Tenth_Seconds -= val * unit
-            result.append("{}".format(val))
-        return result[0] + ":" + result[1] + ":" + result[2] + ":" + result[3]
-
+        
     def Stopwatch_Loop(self):
         while True:
-            self.Reading = self.Convert_Time(self.Get_Time() - self.Mark_BeginOfPeriod)
+            self.Reading = self.Get_Time() - self.Mark_BeginOfPeriod
             time.sleep(0.1)
         pass
 
     def Stopwatch_Thread_Start(self):
         self.Stopwatch_Thread = threading.Thread(target=self.Stopwatch_Loop)
         self.Stopwatch_Thread.start()
-
+    
 STPW_Instance = STPW()
 
 class CTDN():
@@ -109,7 +97,7 @@ class CTDN():
         pass
 
 CTDN_Instance = CTDN()
-
+    
 class PYCLK(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -130,7 +118,6 @@ class PYCLK(tk.Tk):
         Main_Notebook.add(Page_CTDN, text="Countdown")
         Main_Notebook.add(Page_ALRM, text="Alarm")
         Main_Notebook.pack(expand=1, fill="both")
-
 
         # Widgets on page Time
         self.StringVar_TIME_Clock = tk.StringVar()
@@ -156,11 +143,11 @@ class PYCLK(tk.Tk):
         Widget_STPW_StopResetButton = tk.Button(Page_STPW, text="Stop\nReset", activebackground="#FFADAD")
         Widget_STPW_LogButton = tk.Button(Page_STPW, text="Log",activebackground="#F9FF8E")
         Widget_STPW_LogDisplay = tk.Listbox(Page_STPW)
-        Widget_STPW_Display.place(relx=0, rely=0, relheight=0.6, relwidth=0.75)
-        Widget_STPW_StartButton.place(relx=0, rely=0.6, relheight=0.4, relwidth=0.25)
-        Widget_STPW_StopResetButton.place(relx=0.25, rely=0.6, relheight=0.4, relwidth=0.25)
-        Widget_STPW_LogButton.place(relx=0.5, rely=0.6, relheight=0.4, relwidth=0.25)
-        Widget_STPW_LogDisplay.place(relx=0.75, rely=0, relheight=1, relwidth=0.25)
+        Widget_STPW_Display.place(relx=0, rely=0, relheight=0.6, relwidth=0.6)
+        Widget_STPW_StartButton.place(relx=0, rely=0.6, relheight=0.4, relwidth=0.2)
+        Widget_STPW_StopResetButton.place(relx=0.2, rely=0.6, relheight=0.4, relwidth=0.2)
+        Widget_STPW_LogButton.place(relx=0.4, rely=0.6, relheight=0.4, relwidth=0.2)
+        Widget_STPW_LogDisplay.place(relx=0.6, rely=0, relheight=1, relwidth=0.4)
 
         #Widgets on page Countdown
         self.StringVar_CTDN_CurrentReading = tk.StringVar()
@@ -183,7 +170,7 @@ class PYCLK(tk.Tk):
         Widget_CTDN_SLabel.place(relx=0.56, rely=0.75, relheight=0.25, relwidth=0.04)
         Widget_CTDN_StartButton.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
         Widget_CTDN_CancelButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
-
+        
 
         # Start Threads
         self.TIME_Refresh_Loop_Start()

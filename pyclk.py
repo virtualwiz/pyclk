@@ -1,8 +1,8 @@
 # Copyright (C) 2018 Shangming Du, University of Birmingham. All Rights Reserved.
 #  ____         ____ _     _  __
 # |  _ \ _   _ / ___| |   | |/ /
-# | |_) | | | | |   | |   | ' / 
-# |  __/| |_| | |___| |___| . \ 
+# | |_) | | | | |   | |   | ' /
+# |  __/| |_| | |___| |___| . \
 # |_|    \__, |\____|_____|_|\_\
 #        |___/
 #
@@ -49,7 +49,7 @@ TIME_Instance = TIME()
 class STPW():
     def __init__(self):
         # Start countdown thread on CTDN instance creation
-        self.Reading = "READY"
+        self.Reading = ""
         self.Mark_BeginOfPeriod = self.Get_Time()
         self.Mark_EndOfPeriod = self.Get_Time()
         self.Pause_Buffer = 0
@@ -99,7 +99,7 @@ class STPW():
             val = One_Tenth_Seconds // unit
             One_Tenth_Seconds -= val * unit
             result.append("{}".format(val))
-        return result[0] + ":" + result[1] + ":" + result[2] + ":" + result[3]
+        return result[0] + ":" + result[1] + ":" + result[2] + "." + result[3]
 
     def Stopwatch_Loop(self):
         while True:
@@ -139,69 +139,69 @@ class PYCLK(tk.Tk):
         self.resizable(True, True)
 
         # Create tabbed Notebook widget and add Frames as Notebook pages
-        Main_Notebook = ttk.Notebook(self)
-        Page_TIME = ttk.Frame(Main_Notebook)
-        Page_STPW = ttk.Frame(Main_Notebook)
-        Page_CTDN = ttk.Frame(Main_Notebook)
-        Page_ALRM = ttk.Frame(Main_Notebook)
-        Main_Notebook.add(Page_TIME, text="Time")
-        Main_Notebook.add(Page_STPW, text="Stopwatch")
-        Main_Notebook.add(Page_CTDN, text="Countdown")
-        Main_Notebook.add(Page_ALRM, text="Alarm")
-        Main_Notebook.pack(expand=1, fill="both")
+        self.Main_Notebook = ttk.Notebook(self)
+        self.Page_TIME = ttk.Frame(self.Main_Notebook)
+        self.Page_STPW = ttk.Frame(self.Main_Notebook)
+        self.Page_CTDN = ttk.Frame(self.Main_Notebook)
+        self.Page_ALRM = ttk.Frame(self.Main_Notebook)
+        self.Main_Notebook.add(self.Page_TIME, text="Time")
+        self.Main_Notebook.add(self.Page_STPW, text="Stopwatch")
+        self.Main_Notebook.add(self.Page_CTDN, text="Countdown")
+        self.Main_Notebook.add(self.Page_ALRM, text="Alarm")
+        self.Main_Notebook.pack(expand=1, fill="both")
 
 
         # Widgets on page Time
         self.StringVar_TIME_Clock = tk.StringVar()
         self.StringVar_TIME_Date = tk.StringVar()
-        Widget_TIME_Clock = tk.Label(Page_TIME, textvariable=self.StringVar_TIME_Clock, font=("", 70))
-        Widget_TIME_Date = tk.Label(Page_TIME, textvariable=self.StringVar_TIME_Date, font=("", 30))
-        Widget_TIME_TimezoneLabel = tk.Label(Page_TIME, text="Timezone")
-        Widget_TIME_Timezone = tk.Label(Page_TIME, text="Placeholder")
-        Widget_TIME_TimeFormat = tk.Checkbutton(Page_TIME, text="24h Format")
-        Widget_TIME_QuitButton = tk.Button(Page_TIME, text="Quit")
-        Widget_TIME_Clock.place(relx=0, rely=0, relheight=0.5, relwidth=1)
-        Widget_TIME_Date.place(relx=0, rely=0.5, relheight=0.25, relwidth=1)
-        Widget_TIME_TimezoneLabel.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.2)
-        Widget_TIME_Timezone.place(relx=0.2, rely=0.75, relheight=0.25, relwidth=0.4)
-        Widget_TIME_TimeFormat.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
-        Widget_TIME_QuitButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
+        self.Widget_TIME_Clock = tk.Label(self.Page_TIME, textvariable=self.StringVar_TIME_Clock, font=("", 70))
+        self.Widget_TIME_Date = tk.Label(self.Page_TIME, textvariable=self.StringVar_TIME_Date, font=("", 30))
+        self.Widget_TIME_TimezoneLabel = tk.Label(self.Page_TIME, text="Timezone")
+        self.Widget_TIME_Timezone = tk.Label(self.Page_TIME, text="Placeholder")
+        self.Widget_TIME_TimeFormat = tk.Checkbutton(self.Page_TIME, text="24h Format")
+        self.Widget_TIME_QuitButton = tk.Button(self.Page_TIME, text="Quit")
+        self.Widget_TIME_Clock.place(relx=0, rely=0, relheight=0.5, relwidth=1)
+        self.Widget_TIME_Date.place(relx=0, rely=0.5, relheight=0.25, relwidth=1)
+        self.Widget_TIME_TimezoneLabel.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.2)
+        self.Widget_TIME_Timezone.place(relx=0.2, rely=0.75, relheight=0.25, relwidth=0.4)
+        self.Widget_TIME_TimeFormat.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
+        self.Widget_TIME_QuitButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
 
         # Widgets on page Stopwatch
         self.StringVar_STPW_CurrentReading = tk.StringVar()
         self.StringVar_STPW_CurrentReading.set("00:00.0")
-        Widget_STPW_Display = tk.Label(Page_STPW, textvariable=self.StringVar_STPW_CurrentReading, font=("", 50))
-        Widget_STPW_StartButton = tk.Button(Page_STPW, text="Start\nResume", activebackground="#8EFF94", command=lambda:STPW_Instance.Command("start"))
-        Widget_STPW_PauseResetButton = tk.Button(Page_STPW, text="Pause\nReset", activebackground="#FFADAD", command=lambda:STPW_Instance.Command("pausereset"))
-        Widget_STPW_LogButton = tk.Button(Page_STPW, text="Log",activebackground="#F9FF8E", command=lambda:STPW_Instance.Command("log"))
-        self.Widget_STPW_LogDisplay = tk.Listbox(Page_STPW)
-        Widget_STPW_Display.place(relx=0, rely=0, relheight=0.6, relwidth=0.75)
-        Widget_STPW_StartButton.place(relx=0, rely=0.6, relheight=0.4, relwidth=0.25)
-        Widget_STPW_PauseResetButton.place(relx=0.25, rely=0.6, relheight=0.4, relwidth=0.25)
-        Widget_STPW_LogButton.place(relx=0.5, rely=0.6, relheight=0.4, relwidth=0.25)
+        self.Widget_STPW_Display = tk.Label(self.Page_STPW, textvariable=self.StringVar_STPW_CurrentReading, font=("", 50))
+        self.Widget_STPW_StartButton = tk.Button(self.Page_STPW, text="Start\nResume", activebackground="#8EFF94", command=lambda:STPW_Instance.Command("start"))
+        self.Widget_STPW_PauseResetButton = tk.Button(self.Page_STPW, text="Pause\nReset", activebackground="#FFADAD", command=lambda:STPW_Instance.Command("pausereset"))
+        self.Widget_STPW_LogButton = tk.Button(self.Page_STPW, text="Log",activebackground="#F9FF8E", command=lambda:STPW_Instance.Command("log"))
+        self.Widget_STPW_LogDisplay = tk.Listbox(self.Page_STPW)
+        self.Widget_STPW_Display.place(relx=0, rely=0, relheight=0.6, relwidth=0.75)
+        self.Widget_STPW_StartButton.place(relx=0, rely=0.6, relheight=0.4, relwidth=0.25)
+        self.Widget_STPW_PauseResetButton.place(relx=0.25, rely=0.6, relheight=0.4, relwidth=0.25)
+        self.Widget_STPW_LogButton.place(relx=0.5, rely=0.6, relheight=0.4, relwidth=0.25)
         self.Widget_STPW_LogDisplay.place(relx=0.75, rely=0, relheight=1, relwidth=0.25)
 
         #Widgets on page Countdown
         self.StringVar_CTDN_CurrentReading = tk.StringVar()
         self.StringVar_CTDN_CurrentReading.set("HH:MM:SS")
-        Widget_CTDN_Display = tk.Label(Page_CTDN, textvariable=self.StringVar_CTDN_CurrentReading, font=("", 70))
-        Widget_CTDN_HEntry = tk.Entry(Page_CTDN)
-        Widget_CTDN_MEntry = tk.Entry(Page_CTDN)
-        Widget_CTDN_SEntry = tk.Entry(Page_CTDN)
-        Widget_CTDN_HLabel = tk.Label(Page_CTDN, text="H")
-        Widget_CTDN_MLabel = tk.Label(Page_CTDN, text="M")
-        Widget_CTDN_SLabel = tk.Label(Page_CTDN, text="S")
-        Widget_CTDN_StartButton = tk.Button(Page_CTDN, text="Set and\nStart", activebackground="#8EFF94")
-        Widget_CTDN_CancelButton = tk.Button(Page_CTDN, text="Cancel", activebackground="#FFADAD")
-        Widget_CTDN_Display.place(relx=0, rely=0, relheight=0.75, relwidth=1)
-        Widget_CTDN_HEntry.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.16)
-        Widget_CTDN_MEntry.place(relx=0.2, rely=0.75, relheight=0.25, relwidth=0.16)
-        Widget_CTDN_SEntry.place(relx=0.4, rely=0.75, relheight=0.25, relwidth=0.16)
-        Widget_CTDN_HLabel.place(relx=0.16, rely=0.75, relheight=0.25, relwidth=0.04)
-        Widget_CTDN_MLabel.place(relx=0.36, rely=0.75, relheight=0.25, relwidth=0.04)
-        Widget_CTDN_SLabel.place(relx=0.56, rely=0.75, relheight=0.25, relwidth=0.04)
-        Widget_CTDN_StartButton.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
-        Widget_CTDN_CancelButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
+        self.Widget_CTDN_Display = tk.Label(self.Page_CTDN, textvariable=self.StringVar_CTDN_CurrentReading, font=("", 70))
+        self.Widget_CTDN_HEntry = tk.Entry(self.Page_CTDN)
+        self.Widget_CTDN_MEntry = tk.Entry(self.Page_CTDN)
+        self.Widget_CTDN_SEntry = tk.Entry(self.Page_CTDN)
+        self.Widget_CTDN_HLabel = tk.Label(self.Page_CTDN, text="H")
+        self.Widget_CTDN_MLabel = tk.Label(self.Page_CTDN, text="M")
+        self.Widget_CTDN_SLabel = tk.Label(self.Page_CTDN, text="S")
+        self.Widget_CTDN_StartButton = tk.Button(self.Page_CTDN, text="Set and\nStart", activebackground="#8EFF94")
+        self.Widget_CTDN_CancelButton = tk.Button(self.Page_CTDN, text="Cancel", activebackground="#FFADAD")
+        self.Widget_CTDN_Display.place(relx=0, rely=0, relheight=0.75, relwidth=1)
+        self.Widget_CTDN_HEntry.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.16)
+        self.Widget_CTDN_MEntry.place(relx=0.2, rely=0.75, relheight=0.25, relwidth=0.16)
+        self.Widget_CTDN_SEntry.place(relx=0.4, rely=0.75, relheight=0.25, relwidth=0.16)
+        self.Widget_CTDN_HLabel.place(relx=0.16, rely=0.75, relheight=0.25, relwidth=0.04)
+        self.Widget_CTDN_MLabel.place(relx=0.36, rely=0.75, relheight=0.25, relwidth=0.04)
+        self.Widget_CTDN_SLabel.place(relx=0.56, rely=0.75, relheight=0.25, relwidth=0.04)
+        self.Widget_CTDN_StartButton.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
+        self.Widget_CTDN_CancelButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
 
         # Start Threads
         self.TIME_Refresh_Loop_Start()

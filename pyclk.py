@@ -46,19 +46,31 @@ class TIME():
 
 TIME_Instance = TIME()
 
-class STPW():
+class Timer_Common():
+    Reading = ""
+    Is_Running = False
+
+    def Get_Time(self):
+        # Get Unix Since Epoch Time (.1s)
+        return int(time.time() * 10)
+
+    def Convert_Time(self, One_Tenth_Seconds):
+        # Convert to time format from an integer (seconds/10)
+        intervals = [26000, 600, 10, 1]
+        result=[]
+        for unit in intervals:
+            val = One_Tenth_Seconds // unit
+            One_Tenth_Seconds -= val * unit
+            result.append("{}".format(val))
+        return result[0] + ":" + result[1] + ":" + result[2] + "." + result[3]
+
+class STPW(Timer_Common):
     def __init__(self):
         # Start countdown thread on CTDN instance creation
-        self.Reading = ""
         self.Mark_BeginOfPeriod = self.Get_Time()
         self.Mark_EndOfPeriod = self.Get_Time()
         self.Pause_Buffer = 0
-        self.Is_Running = False
         self.Stopwatch_Thread_Start()
-
-    def Get_Time(self):
-        # Get Unix Since Epoch Time(.1s)
-        return int(time.time() * 10)
 
     def Mark(self, Var):
         # Write time reading into a variable
@@ -91,16 +103,6 @@ class STPW():
         elif Cmd == "log":
             PYCLK_Window.Widget_STPW_LogDisplay.insert(tk.END, self.Reading)
 
-    def Convert_Time(self, One_Tenth_Seconds):
-        # Convert to time format from an integer (seconds/10)
-        intervals = [26000, 600, 10, 1]
-        result=[]
-        for unit in intervals:
-            val = One_Tenth_Seconds // unit
-            One_Tenth_Seconds -= val * unit
-            result.append("{}".format(val))
-        return result[0] + ":" + result[1] + ":" + result[2] + "." + result[3]
-
     def Stopwatch_Loop(self):
         while True:
             if self.Is_Running:
@@ -116,16 +118,46 @@ class STPW():
 
 STPW_Instance = STPW()
 
-class CTDN():
+class CTDN(Timer_Common):
     def __init__(self):
         # Start countdown thread on CTDN instance creation
         self.Count_Thread_Start()
+        self.Mark_CountSet = self.Get_Time()
+        self.Mark_CountTerminating = self.Get_Time()
+
+    def Mark(self, Var, TimeDelta=0):
+        # Write time reading into a variable
+        if Var == "set":
+            self.Mark_CountSet = self.Get_Time() + TimeDelta
+        elif Var == "term":
+            self.Mark_CountTerminating = self.Get_Time() + TimeDelta
+
+    def Command(self, Cmd):
+        # Countdown commands
+        if Cmd == "set":
+            self.Mark("set")
+            self.Mark("term", TimeDelta=int(PYCLK_Window.StringVar_CTDN_Hset.get())*36000+int(PYCLK_Window.StringVar_CTDN_Mset.get())*600+int(PYCLK_Window.StringVar_CTDN_Sset.get())*10)
+            self.Is_Running = True
+        elif Cmd == "reset":
+            self.Mark("set")
+            self.Mark("term")
+            self.Is_Running = False
 
     def Count_Loop(self):
-        pass
+        while True:
+            # self.Update_Buttons_State()
+            if self.Is_Running:
+                if(self.Get_Time() != self.Mark_CountTerminating):
+                    self.Reading = self.Convert_Time(self.Mark_CountTerminating - self.Get_Time())
+                else:
+                    self.Is_Running = False
+            else:
+                self.Reading = "READY"
+            time.sleep(0.1)
 
     def Count_Thread_Start(self):
-        pass
+        self.Count_Thread = threading.Thread(target=self.Count_Loop)
+        self.Count_Thread.start()
 
 CTDN_Instance = CTDN()
 
@@ -150,7 +182,6 @@ class PYCLK(tk.Tk):
         self.Main_Notebook.add(self.Page_ALRM, text="Alarm")
         self.Main_Notebook.pack(expand=1, fill="both")
 
-
         # Widgets on page Time
         self.StringVar_TIME_Clock = tk.StringVar()
         self.StringVar_TIME_Date = tk.StringVar()
@@ -169,7 +200,7 @@ class PYCLK(tk.Tk):
 
         # Widgets on page Stopwatch
         self.StringVar_STPW_CurrentReading = tk.StringVar()
-        self.StringVar_STPW_CurrentReading.set("00:00.0")
+        self.StringVar_STPW_CurrentReading.set("N/A")
         self.Widget_STPW_Display = tk.Label(self.Page_STPW, textvariable=self.StringVar_STPW_CurrentReading, font=("", 50))
         self.Widget_STPW_StartButton = tk.Button(self.Page_STPW, text="Start\nResume", activebackground="#8EFF94", command=lambda:STPW_Instance.Command("start"))
         self.Widget_STPW_PauseResetButton = tk.Button(self.Page_STPW, text="Pause\nReset", activebackground="#FFADAD", command=lambda:STPW_Instance.Command("pausereset"))
@@ -183,16 +214,22 @@ class PYCLK(tk.Tk):
 
         #Widgets on page Countdown
         self.StringVar_CTDN_CurrentReading = tk.StringVar()
-        self.StringVar_CTDN_CurrentReading.set("HH:MM:SS")
+        self.StringVar_CTDN_CurrentReading.set("N/A")
+        self.StringVar_CTDN_Hset = tk.StringVar()
+        self.StringVar_CTDN_Mset = tk.StringVar()
+        self.StringVar_CTDN_Sset = tk.StringVar()
+        self.StringVar_CTDN_Hset.set("0")
+        self.StringVar_CTDN_Mset.set("0")
+        self.StringVar_CTDN_Sset.set("0")
         self.Widget_CTDN_Display = tk.Label(self.Page_CTDN, textvariable=self.StringVar_CTDN_CurrentReading, font=("", 70))
-        self.Widget_CTDN_HEntry = tk.Entry(self.Page_CTDN)
-        self.Widget_CTDN_MEntry = tk.Entry(self.Page_CTDN)
-        self.Widget_CTDN_SEntry = tk.Entry(self.Page_CTDN)
+        self.Widget_CTDN_HEntry = tk.Entry(self.Page_CTDN, textvariable=self.StringVar_CTDN_Hset)
+        self.Widget_CTDN_MEntry = tk.Entry(self.Page_CTDN, textvariable=self.StringVar_CTDN_Mset)
+        self.Widget_CTDN_SEntry = tk.Entry(self.Page_CTDN, textvariable=self.StringVar_CTDN_Sset)
         self.Widget_CTDN_HLabel = tk.Label(self.Page_CTDN, text="H")
         self.Widget_CTDN_MLabel = tk.Label(self.Page_CTDN, text="M")
         self.Widget_CTDN_SLabel = tk.Label(self.Page_CTDN, text="S")
-        self.Widget_CTDN_StartButton = tk.Button(self.Page_CTDN, text="Set and\nStart", activebackground="#8EFF94")
-        self.Widget_CTDN_CancelButton = tk.Button(self.Page_CTDN, text="Cancel", activebackground="#FFADAD")
+        self.Widget_CTDN_StartButton = tk.Button(self.Page_CTDN, text="Set and\nStart", activebackground="#8EFF94", command=lambda:CTDN_Instance.Command("set"))
+        self.Widget_CTDN_CancelButton = tk.Button(self.Page_CTDN, text="Cancel", activebackground="#FFADAD", command=lambda:CTDN_Instance.Command("reset"))
         self.Widget_CTDN_Display.place(relx=0, rely=0, relheight=0.75, relwidth=1)
         self.Widget_CTDN_HEntry.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.16)
         self.Widget_CTDN_MEntry.place(relx=0.2, rely=0.75, relheight=0.25, relwidth=0.16)
@@ -206,6 +243,7 @@ class PYCLK(tk.Tk):
         # Start Threads
         self.TIME_Refresh_Loop_Start()
         self.STPW_Refresh_Loop_Start()
+        self.CTDN_Refresh_Loop_Start()
 
     def TIME_Refresh_Loop(self):
         while True:
@@ -226,8 +264,21 @@ class PYCLK(tk.Tk):
         self.STPW_Thread = threading.Thread(target=self.STPW_Refresh_Loop)
         self.STPW_Thread.start()
 
-    # def STPW_Refresh_LogDisplay(self):
-    #     self.Widget_STPW_LogDisplay.insert(tk.END, "something") 
+    def CTDN_Refresh_Loop(self):
+        while True:
+            if CTDN_Instance.Is_Running:
+                self.Widget_CTDN_StartButton.config(state="disabled")
+                self.Widget_CTDN_CancelButton.config(state="normal")
+            else:
+                self.Widget_CTDN_StartButton.config(state="normal")
+                self.Widget_CTDN_CancelButton.config(state="disabled")
+
+            self.StringVar_CTDN_CurrentReading.set(CTDN_Instance.Reading)
+            time.sleep(0.1)
+
+    def CTDN_Refresh_Loop_Start(self):
+        self.CTDN_Thread = threading.Thread(target=self.CTDN_Refresh_Loop)
+        self.CTDN_Thread.start()
 
 PYCLK_Window = PYCLK()
 

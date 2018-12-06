@@ -172,8 +172,8 @@ class CTDN(Timer_Common):
                 if(self.Get_Time() != self.Mark_CountTerminating):
                     self.Reading = self.Convert_Time(self.Mark_CountTerminating - self.Get_Time())
                 else: # Time's up, prompt the user
-                    print("\a\a\a",end='')
-                    messagebox.showinfo("Message from PyCLK", "Time is up in your Countdown Timer session.")
+                    print("\a",end='') # Ring the terminal bell
+                    messagebox.showinfo("Message from PyCLK", "Time is up in your Countdown Timer session.") # Pop up a message box
                     self.Is_Running = False
             else:
                 self.Reading = "READY" # Indicating Idle state

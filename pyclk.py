@@ -7,7 +7,7 @@
 #        |___/
 #
 # PYCLK, SpecialClock with GUI.
-# https://github.com/virtualwiz/pyclk
+# https://github.com/virtualwiz/pyclk Kept PRIVATE before submission
 # ================================================================================
 
 # Import dependencies. Prompt user if Python version isn't correct
@@ -15,18 +15,18 @@ try:
     import sys
     import tkinter as tk # Main GUI library
     from tkinter import ttk # Submodule of tkinter
+    from tkinter import messagebox # Reminder messagebox for Countdown
     import time
     import datetime as rtc # Date and time library
     import threading
+    import webbrowser
 except:
     print("Sorry, some dependencies are not met.")
     print("Can you call this application with Python>=3.1?")
     sys.exit()
 
-Application_Terminate_Signal = False
 Application_Window_Width = 400
 Application_Window_Height = 220
-Application_Debug = True
 
 class TIME():
     def __init__(self):
@@ -110,7 +110,6 @@ class STPW(Timer_Common):
             else:
                 self.Reading = self.Convert_Time(self.Mark_EndOfPeriod - self.Mark_BeginOfPeriod)
             time.sleep(0.1)
-        pass
 
     def Stopwatch_Thread_Start(self):
         self.Stopwatch_Thread = threading.Thread(target=self.Stopwatch_Loop)
@@ -124,6 +123,7 @@ class CTDN(Timer_Common):
         self.Count_Thread_Start()
         self.Mark_CountSet = self.Get_Time()
         self.Mark_CountTerminating = self.Get_Time()
+        self.Delta = 0
 
     def Mark(self, Var, TimeDelta=0):
         # Write time reading into a variable
@@ -134,9 +134,15 @@ class CTDN(Timer_Common):
 
     def Command(self, Cmd):
         # Countdown commands
-        if Cmd == "set":
+        try:
+            Entry_NaN = False
+            self.Delta = int(PYCLK_Window.StringVar_CTDN_Hset.get())*36000+int(PYCLK_Window.StringVar_CTDN_Mset.get())*600+int(PYCLK_Window.StringVar_CTDN_Sset.get())*10
+        except:
+            Entry_NaN = True
+
+        if Cmd == "set" and self.Delta !=0 and Entry_NaN == False:
             self.Mark("set")
-            self.Mark("term", TimeDelta=int(PYCLK_Window.StringVar_CTDN_Hset.get())*36000+int(PYCLK_Window.StringVar_CTDN_Mset.get())*600+int(PYCLK_Window.StringVar_CTDN_Sset.get())*10)
+            self.Mark("term", TimeDelta = self.Delta)
             self.Is_Running = True
         elif Cmd == "reset":
             self.Mark("set")
@@ -150,6 +156,7 @@ class CTDN(Timer_Common):
                 if(self.Get_Time() != self.Mark_CountTerminating):
                     self.Reading = self.Convert_Time(self.Mark_CountTerminating - self.Get_Time())
                 else:
+                    messagebox.showinfo("Message from PyCLK", "Time is up in your Countdown Timer session.")
                     self.Is_Running = False
             else:
                 self.Reading = "READY"
@@ -166,7 +173,7 @@ class PYCLK(tk.Tk):
         super().__init__()
         # Interact with System Window Manager to set window size and title
         # Disable main window resizing
-        self.title("PYCLK")
+        self.title("PyCLK")
         self.geometry(str(Application_Window_Width)+"x"+str(Application_Window_Height))
         self.resizable(True, True)
 
@@ -175,28 +182,25 @@ class PYCLK(tk.Tk):
         self.Page_TIME = ttk.Frame(self.Main_Notebook)
         self.Page_STPW = ttk.Frame(self.Main_Notebook)
         self.Page_CTDN = ttk.Frame(self.Main_Notebook)
-        self.Page_ALRM = ttk.Frame(self.Main_Notebook)
+        self.Page_ABRT = ttk.Frame(self.Main_Notebook)
         self.Main_Notebook.add(self.Page_TIME, text="Time")
         self.Main_Notebook.add(self.Page_STPW, text="Stopwatch")
         self.Main_Notebook.add(self.Page_CTDN, text="Countdown")
-        self.Main_Notebook.add(self.Page_ALRM, text="Alarm")
+        self.Main_Notebook.add(self.Page_ABRT, text="Abort")
         self.Main_Notebook.pack(expand=1, fill="both")
 
         # Widgets on page Time
         self.StringVar_TIME_Clock = tk.StringVar()
         self.StringVar_TIME_Date = tk.StringVar()
+        self.StringVar_TIME_AmPm = tk.StringVar()
         self.Widget_TIME_Clock = tk.Label(self.Page_TIME, textvariable=self.StringVar_TIME_Clock, font=("", 70))
         self.Widget_TIME_Date = tk.Label(self.Page_TIME, textvariable=self.StringVar_TIME_Date, font=("", 30))
-        self.Widget_TIME_TimezoneLabel = tk.Label(self.Page_TIME, text="Timezone")
-        self.Widget_TIME_Timezone = tk.Label(self.Page_TIME, text="Placeholder")
         self.Widget_TIME_TimeFormat = tk.Checkbutton(self.Page_TIME, text="24h Format")
-        self.Widget_TIME_QuitButton = tk.Button(self.Page_TIME, text="Quit")
+        self.Widget_TIME_AmPm = tk.Label(self.Page_TIME, textvariable=self.StringVar_TIME_AmPm, font=("", 30))
         self.Widget_TIME_Clock.place(relx=0, rely=0, relheight=0.5, relwidth=1)
         self.Widget_TIME_Date.place(relx=0, rely=0.5, relheight=0.25, relwidth=1)
-        self.Widget_TIME_TimezoneLabel.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.2)
-        self.Widget_TIME_Timezone.place(relx=0.2, rely=0.75, relheight=0.25, relwidth=0.4)
-        self.Widget_TIME_TimeFormat.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
-        self.Widget_TIME_QuitButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
+        self.Widget_TIME_TimeFormat.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.2)
+        self.Widget_TIME_AmPm.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
 
         # Widgets on page Stopwatch
         self.StringVar_STPW_CurrentReading = tk.StringVar()
@@ -228,8 +232,8 @@ class PYCLK(tk.Tk):
         self.Widget_CTDN_HLabel = tk.Label(self.Page_CTDN, text="H")
         self.Widget_CTDN_MLabel = tk.Label(self.Page_CTDN, text="M")
         self.Widget_CTDN_SLabel = tk.Label(self.Page_CTDN, text="S")
-        self.Widget_CTDN_StartButton = tk.Button(self.Page_CTDN, text="Set and\nStart", activebackground="#8EFF94", command=lambda:CTDN_Instance.Command("set"))
-        self.Widget_CTDN_CancelButton = tk.Button(self.Page_CTDN, text="Cancel", activebackground="#FFADAD", command=lambda:CTDN_Instance.Command("reset"))
+        self.Widget_CTDN_StartButton = tk.Button(self.Page_CTDN, text="Set and\nStart", command=lambda:CTDN_Instance.Command("set"))
+        self.Widget_CTDN_CancelButton = tk.Button(self.Page_CTDN, text="Cancel", command=lambda:CTDN_Instance.Command("reset"))
         self.Widget_CTDN_Display.place(relx=0, rely=0, relheight=0.75, relwidth=1)
         self.Widget_CTDN_HEntry.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.16)
         self.Widget_CTDN_MEntry.place(relx=0.2, rely=0.75, relheight=0.25, relwidth=0.16)
@@ -240,6 +244,12 @@ class PYCLK(tk.Tk):
         self.Widget_CTDN_StartButton.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
         self.Widget_CTDN_CancelButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
 
+        # Widgets on page Abort
+        self.Widget_ABRT_Abort = tk.Label(self.Page_ABRT, text="Designed by Shangming Du\nSchool of Engineering\nUniversity of Birmingham\nDec.06 2018\n\nRemote Git Repository:\nhttps://github.com/virtualwiz/pyclk\n")
+        self.Widget_ABRT_VisitButton = tk.Button(self.Page_ABRT, text="Visit GitHub Page of PyCLK", command=lambda:webbrowser.open_new("https://github.com/virtualwiz/pyclk"))
+        self.Widget_ABRT_Abort.place(relx=0, rely=0, relheight=0.8, relwidth=1)
+        self.Widget_ABRT_VisitButton.place(relx=0, rely=0.8, relheight=0.2, relwidth=1)
+
         # Start Threads
         self.TIME_Refresh_Loop_Start()
         self.STPW_Refresh_Loop_Start()
@@ -247,8 +257,11 @@ class PYCLK(tk.Tk):
 
     def TIME_Refresh_Loop(self):
         while True:
-            self.StringVar_TIME_Clock.set(TIME_Instance.TimeString)
-            self.StringVar_TIME_Date.set(TIME_Instance.DateString)
+            try:
+                self.StringVar_TIME_Clock.set(TIME_Instance.TimeString)
+                self.StringVar_TIME_Date.set(TIME_Instance.DateString)
+            except RuntimeError:
+                sys.exit()
             time.sleep(1)
 
     def TIME_Refresh_Loop_Start(self):
@@ -257,7 +270,10 @@ class PYCLK(tk.Tk):
 
     def STPW_Refresh_Loop(self):
         while True:
-            self.StringVar_STPW_CurrentReading.set(STPW_Instance.Reading)
+            try:
+                self.StringVar_STPW_CurrentReading.set(STPW_Instance.Reading)
+            except RuntimeError:
+                sys.exit()
             time.sleep(0.1)
 
     def STPW_Refresh_Loop_Start(self):
@@ -266,14 +282,16 @@ class PYCLK(tk.Tk):
 
     def CTDN_Refresh_Loop(self):
         while True:
-            if CTDN_Instance.Is_Running:
-                self.Widget_CTDN_StartButton.config(state="disabled")
-                self.Widget_CTDN_CancelButton.config(state="normal")
-            else:
-                self.Widget_CTDN_StartButton.config(state="normal")
-                self.Widget_CTDN_CancelButton.config(state="disabled")
-
-            self.StringVar_CTDN_CurrentReading.set(CTDN_Instance.Reading)
+            try:
+                if CTDN_Instance.Is_Running:
+                    self.Widget_CTDN_StartButton.config(state="disabled")
+                    self.Widget_CTDN_CancelButton.config(state="normal")
+                else:
+                    self.Widget_CTDN_StartButton.config(state="normal")
+                    self.Widget_CTDN_CancelButton.config(state="disabled")
+                self.StringVar_CTDN_CurrentReading.set(CTDN_Instance.Reading)
+            except RuntimeError:
+                sys.exit()
             time.sleep(0.1)
 
     def CTDN_Refresh_Loop_Start(self):

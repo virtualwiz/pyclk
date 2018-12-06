@@ -12,40 +12,43 @@
 
 # Import dependencies. Prompt user if Python version isn't correct
 try:
-    import sys
+    import sys # OS function calls
     import tkinter as tk # Main GUI library
-    from tkinter import ttk # Submodule of tkinter
-    from tkinter import messagebox # Reminder messagebox for Countdown
-    import time
-    import datetime as rtc # Date and time library
-    import threading
-    import webbrowser
+    from tkinter import ttk # Submodule for building multi-tab layout
+    from tkinter import messagebox # For showing messagebox for Countdown
+    import time # Timer essentials
+    import datetime as rtc # Date and time source
+    import threading # Multi-tasking support
+    import webbrowser # For opening doc pages
 except:
     print("Sorry, some dependencies are not met.")
     print("Can you call this application with Python>=3.1?")
     sys.exit()
 
-Application_Window_Width = 400
-Application_Window_Height = 200
+# Define default window size
+Application_Window_Width = 440
+Application_Window_Height = 220
 
 class TIME():
     def __init__(self):
         # Start ticking thread on TIME instance creation
-        self.Format_Is_24 = False
+        self.Format_Is_24 = True
         self.Tick_Thread_Start()
 
     def Command(self, Cmd):
+        # Actions of time page
         if Cmd == "cvfmt":
             self.Format_Is_24 = not self.Format_Is_24
 
     def Tick_Loop(self):
+        # Background time refreshing loop
         while True:
             self.DateTime_Now = rtc.datetime.now()
             self.DateString = self.DateTime_Now.strftime("%a,%d %B %Y")
-            if self.Format_Is_24:
+            if self.Format_Is_24: # 24h format enabled
                 self.TimeString = self.DateTime_Now.strftime("%H:%M:%S")
                 self.AmPmString = "24h"
-            else:
+            else: # 12h format enabled
                 self.TimeString = self.DateTime_Now.strftime("%I:%M:%S")
                 self.AmPmString = self.DateTime_Now.strftime("%p")
             time.sleep(1)
@@ -57,15 +60,16 @@ class TIME():
 TIME_Instance = TIME()
 
 class Timer_Common():
+    # Common attributes and methods both countdown timer and stopwatch will use
     Reading = ""
     Is_Running = False
 
     def Get_Time(self):
-        # Get Unix Since Epoch Time (.1s)
+        # Get Unix Since Epoch Time and cast into integer (unit=.1s)
         return int(time.time() * 10)
 
     def Convert_Time(self, One_Tenth_Seconds):
-        # Convert to time format from an integer (seconds/10)
+        # Convert to time format (H:M:S.dS) from an integer (.1s)
         intervals = [26000, 600, 10, 1]
         result=[]
         for unit in intervals:
@@ -75,6 +79,7 @@ class Timer_Common():
         return result[0] + ":" + result[1] + ":" + result[2] + "." + result[3]
 
 class STPW(Timer_Common):
+    # Inherits Timer_Common Class
     def __init__(self):
         # Start countdown thread on CTDN instance creation
         self.Mark_BeginOfPeriod = self.Get_Time()
@@ -94,15 +99,15 @@ class STPW(Timer_Common):
         if Cmd == "start":
             if self.Is_Running == False: # Stopwatch is not running (pause or idle)
                 self.Is_Running = True
-                if self.Mark_BeginOfPeriod != self.Mark_EndOfPeriod: # Paused state
-                    self.Pause_Buffer = self.Mark_EndOfPeriod - self.Mark_BeginOfPeriod
+                if self.Mark_BeginOfPeriod != self.Mark_EndOfPeriod: # In Paused state
+                    self.Pause_Buffer = self.Mark_EndOfPeriod - self.Mark_BeginOfPeriod # Write current reading into buffer to resume later
                     self.Mark("begin")
                     self.Mark_BeginOfPeriod -= self.Pause_Buffer;
-                else: # Idle state
+                else: # In Idle state
                     self.Mark("begin")
         elif Cmd == "pausereset":
-            if self.Is_Running == False:
-                # Reset the stopwatch
+            if self.Is_Running == False: # Press once to stop, twice to reset
+                # Reset the stopwatch and clear the log list
                 PYCLK_Window.Widget_STPW_LogDisplay.delete(0, tk.END)
                 self.Mark("begin")
                 self.Mark("end")
@@ -110,10 +115,11 @@ class STPW(Timer_Common):
                 # Stop the stopwatch
                 self.Mark("end")
                 self.Is_Running = False
-        elif Cmd == "log":
+        elif Cmd == "log": # Insert current reading to a list
             PYCLK_Window.Widget_STPW_LogDisplay.insert(tk.END, self.Reading)
 
     def Stopwatch_Loop(self):
+        # Background stopwatch refreshing loop
         while True:
             if self.Is_Running:
                 self.Reading = self.Convert_Time(self.Get_Time() - self.Mark_BeginOfPeriod)
@@ -128,6 +134,7 @@ class STPW(Timer_Common):
 STPW_Instance = STPW()
 
 class CTDN(Timer_Common):
+    # Inherits Timer_Common Class
     def __init__(self):
         # Start countdown thread on CTDN instance creation
         self.Count_Thread_Start()
@@ -136,7 +143,7 @@ class CTDN(Timer_Common):
         self.Delta = 0
 
     def Mark(self, Var, TimeDelta=0):
-        # Write time reading into a variable
+        # Write time reading into a variable with an offset value (TimeDelta)
         if Var == "set":
             self.Mark_CountSet = self.Get_Time() + TimeDelta
         elif Var == "term":
@@ -146,30 +153,30 @@ class CTDN(Timer_Common):
         # Countdown commands
         try:
             Entry_NaN = False
-            self.Delta = int(PYCLK_Window.StringVar_CTDN_Hset.get())*36000+int(PYCLK_Window.StringVar_CTDN_Mset.get())*600+int(PYCLK_Window.StringVar_CTDN_Sset.get())*10
+            self.Delta = int(PYCLK_Window.StringVar_CTDN_Hset.get())*36000+int(PYCLK_Window.StringVar_CTDN_Mset.get())*600+int(PYCLK_Window.StringVar_CTDN_Sset.get())*10 # Convert unit into .1s
         except:
-            Entry_NaN = True
+            Entry_NaN = True # If cast failed the input value is not an integer
 
-        if Cmd == "set" and self.Delta !=0 and Entry_NaN == False:
+        if Cmd == "set" and self.Delta !=0 and Entry_NaN == False: # Is a non-zero number
             self.Mark("set")
             self.Mark("term", TimeDelta = self.Delta)
             self.Is_Running = True
-        elif Cmd == "reset":
+        elif Cmd == "reset": # Reset the countdown timer
             self.Mark("set")
             self.Mark("term")
             self.Is_Running = False
 
     def Count_Loop(self):
         while True:
-            # self.Update_Buttons_State()
             if self.Is_Running:
                 if(self.Get_Time() != self.Mark_CountTerminating):
                     self.Reading = self.Convert_Time(self.Mark_CountTerminating - self.Get_Time())
-                else:
+                else: # Time's up, prompt the user
+                    print("\a\a\a",end='')
                     messagebox.showinfo("Message from PyCLK", "Time is up in your Countdown Timer session.")
                     self.Is_Running = False
             else:
-                self.Reading = "READY"
+                self.Reading = "READY" # Indicating Idle state
             time.sleep(0.1)
 
     def Count_Thread_Start(self):
@@ -179,10 +186,11 @@ class CTDN(Timer_Common):
 CTDN_Instance = CTDN()
 
 class PYCLK(tk.Tk):
+    # Class for main GUI
     def __init__(self):
         super().__init__()
         # Interact with System Window Manager to set window size and title
-        # Disable main window resizing
+        # Enable main window resizing
         self.title("PyCLK")
         self.geometry(str(Application_Window_Width)+"x"+str(Application_Window_Height))
         self.resizable(True, True)
@@ -192,11 +200,11 @@ class PYCLK(tk.Tk):
         self.Page_TIME = ttk.Frame(self.Main_Notebook)
         self.Page_STPW = ttk.Frame(self.Main_Notebook)
         self.Page_CTDN = ttk.Frame(self.Main_Notebook)
-        self.Page_ABRT = ttk.Frame(self.Main_Notebook)
+        self.Page_ABUT = ttk.Frame(self.Main_Notebook)
         self.Main_Notebook.add(self.Page_TIME, text="Time")
         self.Main_Notebook.add(self.Page_STPW, text="Stopwatch")
         self.Main_Notebook.add(self.Page_CTDN, text="Countdown")
-        self.Main_Notebook.add(self.Page_ABRT, text="Abort")
+        self.Main_Notebook.add(self.Page_ABUT, text="About")
         self.Main_Notebook.pack(expand=1, fill="both")
 
         # Widgets on page Time
@@ -254,13 +262,13 @@ class PYCLK(tk.Tk):
         self.Widget_CTDN_StartButton.place(relx=0.6, rely=0.75, relheight=0.25, relwidth=0.2)
         self.Widget_CTDN_CancelButton.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
 
-        # Widgets on page Abort
-        self.Widget_ABRT_Abort = tk.Label(self.Page_ABRT, text="Designed by Shangming Du\nSchool of Engineering\nUniversity of Birmingham\nDec.06 2018\n\nRemote Git Repository:\nhttps://github.com/virtualwiz/pyclk\n")
-        self.Widget_ABRT_VisitButton = tk.Button(self.Page_ABRT, text="Visit GitHub Page of PyCLK", command=lambda:webbrowser.open_new("https://github.com/virtualwiz/pyclk"))
-        self.Widget_ABRT_Abort.place(relx=0, rely=0, relheight=0.8, relwidth=1)
-        self.Widget_ABRT_VisitButton.place(relx=0, rely=0.8, relheight=0.2, relwidth=1)
+        # Widgets on page About
+        self.Widget_ABUT_About = tk.Label(self.Page_ABUT, text="Designed by Shangming Du\nSchool of Engineering\nUniversity of Birmingham\nDec.06 2018\n\nRemote Git Repository:\nhttps://github.com/virtualwiz/pyclk\n")
+        self.Widget_ABUT_VisitButton = tk.Button(self.Page_ABUT, text="Visit GitHub Page of PyCLK", command=lambda:webbrowser.open_new("https://github.com/virtualwiz/pyclk"))
+        self.Widget_ABUT_About.place(relx=0, rely=0, relheight=0.8, relwidth=1)
+        self.Widget_ABUT_VisitButton.place(relx=0, rely=0.8, relheight=0.2, relwidth=1)
 
-        # Start Threads
+        # Start Foreground GUI updating threads
         self.TIME_Refresh_Loop_Start()
         self.STPW_Refresh_Loop_Start()
         self.CTDN_Refresh_Loop_Start()
@@ -293,7 +301,7 @@ class PYCLK(tk.Tk):
 
     def CTDN_Refresh_Loop(self):
         while True:
-            try:
+            try: # Disabling countdown buttons based on states to avoid conflicting operation
                 if CTDN_Instance.Is_Running:
                     self.Widget_CTDN_StartButton.config(state="disabled")
                     self.Widget_CTDN_CancelButton.config(state="normal")

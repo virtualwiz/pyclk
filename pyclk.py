@@ -26,18 +26,28 @@ except:
     sys.exit()
 
 Application_Window_Width = 400
-Application_Window_Height = 220
+Application_Window_Height = 200
 
 class TIME():
     def __init__(self):
         # Start ticking thread on TIME instance creation
+        self.Format_Is_24 = False
         self.Tick_Thread_Start()
+
+    def Command(self, Cmd):
+        if Cmd == "cvfmt":
+            self.Format_Is_24 = not self.Format_Is_24
 
     def Tick_Loop(self):
         while True:
             self.DateTime_Now = rtc.datetime.now()
-            self.TimeString = self.DateTime_Now.strftime("%H:%M:%S")
             self.DateString = self.DateTime_Now.strftime("%a,%d %B %Y")
+            if self.Format_Is_24:
+                self.TimeString = self.DateTime_Now.strftime("%H:%M:%S")
+                self.AmPmString = "24h"
+            else:
+                self.TimeString = self.DateTime_Now.strftime("%I:%M:%S")
+                self.AmPmString = self.DateTime_Now.strftime("%p")
             time.sleep(1)
 
     def Tick_Thread_Start(self):
@@ -195,12 +205,12 @@ class PYCLK(tk.Tk):
         self.StringVar_TIME_AmPm = tk.StringVar()
         self.Widget_TIME_Clock = tk.Label(self.Page_TIME, textvariable=self.StringVar_TIME_Clock, font=("", 70))
         self.Widget_TIME_Date = tk.Label(self.Page_TIME, textvariable=self.StringVar_TIME_Date, font=("", 30))
-        self.Widget_TIME_TimeFormat = tk.Checkbutton(self.Page_TIME, text="24h Format")
+        self.Widget_TIME_TimeFormat = tk.Button(self.Page_TIME, text="Toggle 12/24h", command=lambda:TIME_Instance.Command("cvfmt"))
         self.Widget_TIME_AmPm = tk.Label(self.Page_TIME, textvariable=self.StringVar_TIME_AmPm, font=("", 30))
-        self.Widget_TIME_Clock.place(relx=0, rely=0, relheight=0.5, relwidth=1)
-        self.Widget_TIME_Date.place(relx=0, rely=0.5, relheight=0.25, relwidth=1)
-        self.Widget_TIME_TimeFormat.place(relx=0, rely=0.75, relheight=0.25, relwidth=0.2)
-        self.Widget_TIME_AmPm.place(relx=0.8, rely=0.75, relheight=0.25, relwidth=0.2)
+        self.Widget_TIME_Clock.place(relx=0, rely=0, relheight=0.55, relwidth=1)
+        self.Widget_TIME_Date.place(relx=0, rely=0.55, relheight=0.25, relwidth=1)
+        self.Widget_TIME_TimeFormat.place(relx=0, rely=0.8, relheight=0.2, relwidth=0.3)
+        self.Widget_TIME_AmPm.place(relx=0.8, rely=0.8, relheight=0.2, relwidth=0.2)
 
         # Widgets on page Stopwatch
         self.StringVar_STPW_CurrentReading = tk.StringVar()
@@ -260,6 +270,7 @@ class PYCLK(tk.Tk):
             try:
                 self.StringVar_TIME_Clock.set(TIME_Instance.TimeString)
                 self.StringVar_TIME_Date.set(TIME_Instance.DateString)
+                self.StringVar_TIME_AmPm.set(TIME_Instance.AmPmString)
             except RuntimeError:
                 sys.exit()
             time.sleep(1)

@@ -70,7 +70,7 @@ class Timer_Common():
 
     def Convert_Time(self, One_Tenth_Seconds):
         # Convert to time format (H:M:S.dS) from an integer (.1s)
-        intervals = [26000, 600, 10, 1]
+        intervals = [36000, 600, 10, 1]
         result=[]
         for unit in intervals:
             val = One_Tenth_Seconds // unit

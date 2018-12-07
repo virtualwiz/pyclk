@@ -6,7 +6,7 @@ No other libraries needed besides python.org Python3 built-in libraries.
 
 Call with Python3.
 
-Works best on GNU/Linux (Ubuntu 16.02) machine
+Developed on GNU/Linux (Ubuntu 16.04)
 
 ![](pics/main.png)
 ![](pics/stpw.png)

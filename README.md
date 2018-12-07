@@ -9,8 +9,11 @@ Call with Python3.
 Developed on GNU/Linux (Ubuntu 16.04)
 
 ![](pics/main.png)
+
 ![](pics/stpw.png)
+
 ![](pics/ctdn.png)
+
 ![](pics/up.png)
 
 Also tested on MS Windows 7 and Apple macOS Mojave
